@@ -17,7 +17,7 @@ getExpressApp(config)
     }
 )
 .catch((error) => {
-    config.dbInstance.close().catch(err => err)
+    // config.dbInstance.close().catch(err => err)
     console.log(error)
 })
 

@@ -2,16 +2,18 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const databaseInit = require('./db');
 const services = require('./services')
 const controllers = require('./controllers')
 const routes = require('./routes');
+const db = require('./models')
 
 const getExpressApp = async (config) => {
     const app = express()
 
-    const tables = await databaseInit(config);
-    const allServices = services(tables)
+    config.dbInstance = db.sequelize;
+    const models = db.sequelize.models;
+
+    const allServices = services(models)
     const allRoutes = routes(controllers)
 
     app.use(cors())

@@ -1,13 +1,15 @@
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 const mapUserDate = ({
-    user_id,
+    id,
     user_name,
-    add_date,
-    is_deleted,
+    email,
 }) => {
     return {
-        userID : user_id,
+        userID : id,
         userName : user_name,
-        addDate : add_date,
+        email
     }
 }
 class Users{
@@ -15,22 +17,37 @@ class Users{
         this.models = models
     }
 
-    async getAllUsers(){
+    async login(body){
+        const {password} = body;
+
         const where = {
+            email: body.email,
             is_deleted : 0,
         }
-        const data = await this.models.users.findAll({where})
+        const user = await this.models.User.findOne({where})
         
-        return data.map(mapUserDate)
+        const isAuth = await bcrypt.compare(password, user.password)
+
+        if(isAuth){
+            return mapUserDate(user)
+        }
+
+        return {success : false}
     }
 
-    async createUser(body){
+    async register(body){
+        const {password} = body;
+
+        const passHash = await bcrypt.hash(password, saltRounds);
+
         const createSet = {
             user_name : body.userName,
+            email: body.email,
+            password: passHash,
             is_deleted : 0,  
         }
 
-        const data =  await this.models.users.create(createSet)
+        const data =  await this.models.User.create(createSet)
         if(data){
             return {
                 success : true
@@ -48,10 +65,10 @@ class Users{
         }
 
         const where = {
-            user_id: userID
+            id: userID
         }
 
-        const user = await this.models.users.update(updateSet, {where})
+        const user = await this.models.User.update(updateSet, {where})
 
         if(user){
             return {
@@ -64,27 +81,6 @@ class Users{
         }
     }
 
-    async deleteUser(userID){
-        const where = {
-            user_id : userID
-        }
-
-        const deleteSet = {
-            is_deleted : 1
-        }
-
-        const user = await this.models.users.update(deleteSet, {where})
-
-        if(user){
-            return {
-                success : true
-            }
-        }
-
-        return {
-            success : false
-        }
-    }
 }
 
 module.exports = Users
